@@ -254,10 +254,11 @@ void Snapshot::ClearReconstructableDataForSerialization(
     // Also, clear out feedback vectors and any optimized code.
     if (CodeKindIsJSFunction(fun.code().kind())) {
       fun.set_code(*BUILTIN_CODE(isolate, CompileLazy));
-    }
-    if (!fun.raw_feedback_cell().value().IsUndefined()) {
       fun.raw_feedback_cell().set_value(
           i::ReadOnlyRoots(isolate).undefined_value());
+    } else if (fun.has_feedback_vector()) {
+      // Non-JS function (e.g. builtin).
+      fun.feedback_vector().ClearSlots(isolate);
     }
 #ifdef DEBUG
     if (clear_recompilable_data) {
@@ -267,7 +268,7 @@ void Snapshot::ClearReconstructableDataForSerialization(
     }
 #endif  // DEBUG
   }
-}
+}  // namespace internal
 
 // static
 void Snapshot::SerializeDeserializeAndVerifyForTesting(
